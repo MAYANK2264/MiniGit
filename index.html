@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiniGit - A Simplified GitHub Clone</title>
+    <meta name="description" content="MiniGit is a simplified version control system that mimics GitHub's core functionality, built with C++ backend and React frontend">
+    <meta name="keywords" content="git, version control, github clone, c++, react, typescript">
+    <meta name="author" content="MiniGit Developer">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://mayank2264.github.io/MiniGit/">
+    <meta property="og:title" content="MiniGit - A Simplified GitHub Clone">
+    <meta property="og:description" content="MiniGit is a simplified version control system that mimics GitHub's core functionality">
+    <meta property="og:image" content="https://mayank2264.github.io/MiniGit/assets/preview.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://mayank2264.github.io/MiniGit/">
+    <meta property="twitter:title" content="MiniGit - A Simplified GitHub Clone">
+    <meta property="twitter:description" content="MiniGit is a simplified version control system that mimics GitHub's core functionality">
+    <meta property="twitter:image" content="https://mayank2264.github.io/MiniGit/assets/preview.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --neon-cyan: #00FFFF;
+            --neon-purple: #BF00FF;
+            --deep-indigo: #1A0D33;
+            --dark-purple: #0A041A;
+        }
+        
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: 
+                radial-gradient(1200px 800px at 70% -10%, rgba(0,255,255,0.15), transparent),
+                radial-gradient(1200px 800px at 0% 0%, rgba(191,0,255,0.12), transparent),
+                radial-gradient(800px 600px at 100% 100%, rgba(191,0,255,0.08), transparent),
+                linear-gradient(135deg, #1A0D33 0%, #0A041A 100%);
+            color: #e5e7eb;
+            min-height: 100vh;
+        }
+        
+        .glass {
+            background: rgba(30, 10, 60, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+        }
+        
+        .glow-cyan {
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+        
+        .glow-purple {
+            box-shadow: 0 0 20px rgba(191, 0, 255, 0.3);
+        }
+        
+        .text-gradient {
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3);
+        }
+        
+        .feature-card {
+            background: rgba(30, 10, 60, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="glass sticky top-0 z-50 px-6 py-4 backdrop-blur-xl border-b border-white/10">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="h-12 w-12 rounded-2xl bg-gradient-to-br from-neon-cyan via-neon-purple to-neon-cyan flex items-center justify-center glow-cyan">
+                    <svg class="h-6 w-6 text-black" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="font-bold text-2xl tracking-wide text-gradient">MiniGit Studio</div>
+                    <div class="text-sm opacity-60">Version Control Reimagined</div>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="#features" class="text-white hover:text-neon-cyan transition-colors">Features</a>
+                <a href="#tech" class="text-white hover:text-neon-cyan transition-colors">Tech Stack</a>
+                <a href="#demo" class="text-white hover:text-neon-cyan transition-colors">Demo</a>
+                <a href="https://github.com/MAYANK2264/MiniGit" target="_blank" class="btn-primary">View on GitHub</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="px-6 py-20 text-center">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-6xl font-bold mb-6 text-gradient">
+                MiniGit
+            </h1>
+            <p class="text-xl mb-8 opacity-90 leading-relaxed">
+                A simplified version control system that mimics GitHub's core functionality, 
+                built with <strong>C++ backend</strong> for robust version control logic and 
+                <strong>React frontend</strong> for a stunning, modern user interface.
+            </p>
+            <div class="flex items-center justify-center gap-4 mb-12">
+                <a href="https://github.com/MAYANK2264/MiniGit" target="_blank" class="btn-primary">
+                    🚀 Get Started
+                </a>
+                <a href="#demo" class="px-6 py-3 border border-neon-cyan text-neon-cyan rounded-xl hover:bg-neon-cyan/10 transition-colors">
+                    🎥 Watch Demo
+                </a>
+            </div>
+            <div class="glass p-8 max-w-3xl mx-auto">
+                <div class="text-sm opacity-70 mb-4">Live Demo</div>
+                <div class="bg-black/40 rounded-lg p-4 border border-white/10">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                        <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                    </div>
+                    <div class="text-left font-mono text-sm">
+                        <div class="text-green-400">$ git clone https://github.com/MAYANK2264/MiniGit.git</div>
+                        <div class="text-blue-400">$ cd MiniGit</div>
+                        <div class="text-yellow-400">$ ./scripts/dev.ps1</div>
+                        <div class="text-gray-400">🚀 MiniGit is running on http://localhost:5174</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="px-6 py-20">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-4xl font-bold text-center mb-16 text-gradient">Core Features</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="feature-card">
+                    <div class="w-12 h-12 bg-neon-cyan/20 rounded-xl flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-neon-cyan" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Repository Management</h3>
+                    <p class="opacity-80">Initialize repositories, stage files, and create commits with ease. Full Git workflow support.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="w-12 h-12 bg-neon-purple/20 rounded-xl flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-neon-purple" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M7 3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2H7zm0 2h14v14H7V5z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Branch Management</h3>
+                    <p class="opacity-80">Create, switch, and merge branches. Handle conflicts with built-in resolution tools.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="w-12 h-12 bg-neon-cyan/20 rounded-xl flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-neon-cyan" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Beautiful UI</h3>
+                    <p class="opacity-80">Modern, responsive interface with smooth animations. GitHub-inspired design with glassmorphism effects.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="w-12 h-12 bg-neon-purple/20 rounded-xl flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-neon-purple" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Commit History</h3>
+                    <p class="opacity-80">Visualize commit history with interactive graphs. Navigate through repository states effortlessly.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="w-12 h-12 bg-neon-cyan/20 rounded-xl flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-neon-cyan" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Code Editor</h3>
+                    <p class="opacity-80">Built-in code editor with syntax highlighting. View and edit files directly in the interface.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="w-12 h-12 bg-neon-purple/20 rounded-xl flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-neon-purple" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Docker Support</h3>
+                    <p class="opacity-80">Easy deployment with Docker and Docker Compose. Run anywhere with containerized services.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack Section -->
+    <section id="tech" class="px-6 py-20 bg-black/20">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-4xl font-bold text-center mb-16 text-gradient">Technology Stack</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div>
+                    <h3 class="text-2xl font-semibold mb-6 text-neon-cyan">Backend (C++)</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-3 h-3 bg-neon-cyan rounded-full"></div>
+                            <span>CMake build system</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-3 h-3 bg-neon-cyan rounded-full"></div>
+                            <span>Custom HTTP server implementation</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-3 h-3 bg-neon-cyan rounded-full"></div>
+                            <span>JSON-based storage for commits and metadata</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-3 h-3 bg-neon-cyan rounded-full"></div>
+                            <span>SHA1-like hashing for commit identification</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-3 h-3 bg-neon-cyan rounded-full"></div>
+                            <span>Dynamic Programming for diff calculations</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-2xl font-semibold mb-6 text-neon-purple">Frontend (React)</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-3 h-3 bg-neon-purple rounded-full"></div>
+                            <span>Vite for fast development and building</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-3 h-3 bg-neon-purple rounded-full"></div>
+                            <span>TypeScript for type safety</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-3 h-3 bg-neon-purple rounded-full"></div>
+                            <span>Tailwind CSS for modern styling</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-3 h-3 bg-neon-purple rounded-full"></div>
+                            <span>Framer Motion for smooth animations</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-3 h-3 bg-neon-purple rounded-full"></div>
+                            <span>React Query for data fetching</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-3 h-3 bg-neon-purple rounded-full"></div>
+                            <span>Zustand for state management</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="px-6 py-20">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-4xl font-bold text-center mb-16 text-gradient">Live Demo</h2>
+            <div class="glass p-8">
+                <div class="text-center mb-8">
+                    <p class="text-lg opacity-80 mb-4">Experience MiniGit in action with our interactive demo</p>
+                    <div class="flex items-center justify-center gap-4">
+                        <a href="https://github.com/MAYANK2264/MiniGit" target="_blank" class="btn-primary">
+                            🚀 Try MiniGit
+                        </a>
+                        <a href="https://github.com/MAYANK2264/MiniGit/blob/main/README.md" target="_blank" class="px-6 py-3 border border-neon-cyan text-neon-cyan rounded-xl hover:bg-neon-cyan/10 transition-colors">
+                            📖 Read Documentation
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-black/40 rounded-lg p-6 border border-white/10">
+                        <h3 class="text-lg font-semibold mb-3 text-neon-cyan">Repository Tree</h3>
+                        <p class="opacity-80 text-sm">Interactive file tree with expandable folders and file selection</p>
+                    </div>
+                    
+                    <div class="bg-black/40 rounded-lg p-6 border border-white/10">
+                        <h3 class="text-lg font-semibold mb-3 text-neon-purple">Commit Graph</h3>
+                        <p class="opacity-80 text-sm">Visual commit history with branch visualization and navigation</p>
+                    </div>
+                    
+                    <div class="bg-black/40 rounded-lg p-6 border border-white/10">
+                        <h3 class="text-lg font-semibold mb-3 text-neon-cyan">Code Editor</h3>
+                        <p class="opacity-80 text-sm">Syntax-highlighted code viewer with tabbed interface</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="px-6 py-12 border-t border-white/10">
+        <div class="max-w-7xl mx-auto text-center">
+            <div class="flex items-center justify-center gap-4 mb-6">
+                <div class="h-12 w-12 rounded-2xl bg-gradient-to-br from-neon-cyan via-neon-purple to-neon-cyan flex items-center justify-center glow-cyan">
+                    <svg class="h-6 w-6 text-black" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                </div>
+                <div class="font-bold text-2xl tracking-wide text-gradient">MiniGit Studio</div>
+            </div>
+            <p class="opacity-70 mb-6">A simplified version control system built with C++ and React</p>
+            <div class="flex items-center justify-center gap-6 mb-8">
+                <a href="https://github.com/MAYANK2264/MiniGit" target="_blank" class="text-white hover:text-neon-cyan transition-colors">
+                    GitHub
+                </a>
+                <a href="https://github.com/MAYANK2264/MiniGit/issues" target="_blank" class="text-white hover:text-neon-cyan transition-colors">
+                    Issues
+                </a>
+                <a href="https://github.com/MAYANK2264/MiniGit/blob/main/README.md" target="_blank" class="text-white hover:text-neon-cyan transition-colors">
+                    Documentation
+                </a>
+            </div>
+            <div class="text-sm opacity-50">
+                Built with ❤️ using C++ and React | Open Source
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add scroll effect to navigation
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 100) {
+                nav.classList.add('bg-black/20');
+            } else {
+                nav.classList.remove('bg-black/20');
+            }
+        });
+    </script>
+</body>
+</html>
