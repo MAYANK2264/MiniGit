@@ -188,7 +188,8 @@ async def create_file(repo_id: str, request: CreateFileRequest):
     file_dict["repo_id"] = repo_id
     
     if existing_file:
-        # Update existing file
+        # Update existing file - preserve the existing ID
+        file_dict["id"] = existing_file["id"]
         await db.files.replace_one({"id": existing_file["id"]}, file_dict)
         file_content.id = existing_file["id"]
     else:
