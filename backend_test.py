@@ -307,6 +307,257 @@ def test_repository_file_count(repo_id):
     except Exception as e:
         results.log_fail("Repository file_count tracking", str(e))
 
+def test_dsa_commit_system(repo_id):
+    """Test DSA algorithms and commit system endpoints"""
+    if not repo_id:
+        print("\n⚠️  Skipping DSA commit system tests - no repository ID available")
+        return
+        
+    print("\n🔍 Testing DSA Algorithms & Commit System...")
+    
+    commit_hashes = []
+    
+    # First, create some files for testing
+    try:
+        # Create initial file
+        file_data1 = {
+            "name": "algorithm_test.py",
+            "content": "def bubble_sort(arr):\n    n = len(arr)\n    for i in range(n):\n        for j in range(0, n-i-1):\n            if arr[j] > arr[j+1]:\n                arr[j], arr[j+1] = arr[j+1], arr[j]\n    return arr"
+        }
+        response = requests.post(f"{BASE_URL}/repositories/{repo_id}/files", json=file_data1, timeout=10)
+        if response.status_code == 200:
+            results.log_pass("Create initial file for DSA testing")
+        else:
+            results.log_fail("Create initial file", f"Status code: {response.status_code}")
+    except Exception as e:
+        results.log_fail("Create initial file", str(e))
+    
+    # Test 1: Create first commit (SHA-1 hashing & commit creation)
+    try:
+        commit_data = {
+            "message": "Initial commit: Add bubble sort algorithm",
+            "author": "DSA Tester"
+        }
+        response = requests.post(f"{BASE_URL}/repositories/{repo_id}/commit", json=commit_data, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            if "commit_hash" in data and "files_snapshot" in data and "changes_summary" in data:
+                commit_hashes.append(data["commit_hash"])
+                # Verify SHA-1 hash format (40 characters, hexadecimal)
+                if len(data["commit_hash"]) == 40 and all(c in "0123456789abcdef" for c in data["commit_hash"]):
+                    results.log_pass("Create commit with SHA-1 hashing (POST /api/repositories/{id}/commit)")
+                else:
+                    results.log_fail("SHA-1 hash format", f"Invalid hash format: {data['commit_hash']}")
+                
+                # Verify changes summary
+                changes = data["changes_summary"]
+                if changes.get("additions", 0) > 0:
+                    results.log_pass("Commit changes summary tracking")
+                else:
+                    results.log_fail("Commit changes summary", f"Expected additions > 0, got: {changes}")
+            else:
+                results.log_fail("Create commit", "Missing required fields in commit response")
+        else:
+            results.log_fail("Create commit", f"Status code: {response.status_code}, Response: {response.text}")
+    except Exception as e:
+        results.log_fail("Create commit", str(e))
+    
+    # Test 2: Modify file and create second commit (test parent-child relationship)
+    try:
+        # Modify the algorithm file
+        modified_content = "def bubble_sort(arr):\n    \"\"\"Optimized bubble sort with early termination\"\"\"\n    n = len(arr)\n    for i in range(n):\n        swapped = False\n        for j in range(0, n-i-1):\n            if arr[j] > arr[j+1]:\n                arr[j], arr[j+1] = arr[j+1], arr[j]\n                swapped = True\n        if not swapped:\n            break\n    return arr\n\ndef quick_sort(arr):\n    if len(arr) <= 1:\n        return arr\n    pivot = arr[len(arr) // 2]\n    left = [x for x in arr if x < pivot]\n    middle = [x for x in arr if x == pivot]\n    right = [x for x in arr if x > pivot]\n    return quick_sort(left) + middle + quick_sort(right)"
+        
+        # Get the file ID first
+        files_response = requests.get(f"{BASE_URL}/repositories/{repo_id}/files", timeout=10)
+        if files_response.status_code == 200:
+            files = files_response.json()
+            algo_file = next((f for f in files if f["name"] == "algorithm_test.py"), None)
+            if algo_file:
+                # Update the file
+                update_data = {"content": modified_content}
+                update_response = requests.put(f"{BASE_URL}/repositories/{repo_id}/files/{algo_file['id']}", json=update_data, timeout=10)
+                if update_response.status_code == 200:
+                    results.log_pass("Modify file for second commit")
+                else:
+                    results.log_fail("Modify file", f"Status code: {update_response.status_code}")
+            else:
+                results.log_fail("Find algorithm file", "Could not find algorithm_test.py")
+        else:
+            results.log_fail("Get files for modification", f"Status code: {files_response.status_code}")
+    except Exception as e:
+        results.log_fail("Modify file for second commit", str(e))
+    
+    # Create second commit
+    try:
+        commit_data2 = {
+            "message": "Add quick sort and optimize bubble sort",
+            "author": "DSA Tester"
+        }
+        response = requests.post(f"{BASE_URL}/repositories/{repo_id}/commit", json=commit_data2, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            if "commit_hash" in data and "parent_commits" in data:
+                commit_hashes.append(data["commit_hash"])
+                # Verify parent-child relationship in DAG
+                if len(data["parent_commits"]) == 1 and data["parent_commits"][0] == commit_hashes[0]:
+                    results.log_pass("Commit DAG parent-child relationship")
+                else:
+                    results.log_fail("Commit DAG relationship", f"Expected parent {commit_hashes[0]}, got: {data['parent_commits']}")
+                
+                # Verify modifications count
+                changes = data["changes_summary"]
+                if changes.get("modifications", 0) > 0:
+                    results.log_pass("Commit modifications tracking")
+                else:
+                    results.log_fail("Commit modifications", f"Expected modifications > 0, got: {changes}")
+            else:
+                results.log_fail("Second commit creation", "Missing required fields")
+        else:
+            results.log_fail("Second commit creation", f"Status code: {response.status_code}")
+    except Exception as e:
+        results.log_fail("Second commit creation", str(e))
+    
+    # Test 3: Get commit history
+    try:
+        response = requests.get(f"{BASE_URL}/repositories/{repo_id}/commits", timeout=10)
+        if response.status_code == 200:
+            commits = response.json()
+            if isinstance(commits, list) and len(commits) >= 2:
+                results.log_pass("Get commit history (GET /api/repositories/{id}/commits)")
+                
+                # Verify commits are ordered by timestamp (newest first)
+                if len(commits) >= 2:
+                    first_commit_time = commits[0]["created_at"]
+                    second_commit_time = commits[1]["created_at"]
+                    if first_commit_time >= second_commit_time:
+                        results.log_pass("Commit history ordering (newest first)")
+                    else:
+                        results.log_fail("Commit history ordering", "Commits not ordered correctly")
+            else:
+                results.log_fail("Get commit history", f"Expected list with 2+ commits, got: {commits}")
+        else:
+            results.log_fail("Get commit history", f"Status code: {response.status_code}")
+    except Exception as e:
+        results.log_fail("Get commit history", str(e))
+    
+    # Test 4: Get specific commit
+    if commit_hashes:
+        try:
+            response = requests.get(f"{BASE_URL}/repositories/{repo_id}/commits/{commit_hashes[0]}", timeout=10)
+            if response.status_code == 200:
+                commit_data = response.json()
+                if commit_data.get("commit_hash") == commit_hashes[0]:
+                    results.log_pass("Get specific commit (GET /api/repositories/{id}/commits/{hash})")
+                else:
+                    results.log_fail("Get specific commit", "Commit hash mismatch")
+            else:
+                results.log_fail("Get specific commit", f"Status code: {response.status_code}")
+        except Exception as e:
+            results.log_fail("Get specific commit", str(e))
+    
+    # Test 5: Get commit graph (DAG structure)
+    try:
+        response = requests.get(f"{BASE_URL}/repositories/{repo_id}/commit-graph", timeout=10)
+        if response.status_code == 200:
+            graph = response.json()
+            if "nodes" in graph and "edges" in graph and "total_commits" in graph:
+                results.log_pass("Get commit graph DAG (GET /api/repositories/{id}/commit-graph)")
+                
+                # Verify graph structure
+                nodes = graph["nodes"]
+                edges = graph["edges"]
+                if len(nodes) >= 2 and len(edges) >= 1:
+                    results.log_pass("Commit DAG structure validation")
+                    
+                    # Verify edge connects correct commits
+                    if len(edges) > 0:
+                        edge = edges[0]
+                        if "from" in edge and "to" in edge:
+                            results.log_pass("Commit DAG edge structure")
+                        else:
+                            results.log_fail("Commit DAG edge structure", "Missing from/to in edge")
+                else:
+                    results.log_fail("Commit DAG structure", f"Expected 2+ nodes and 1+ edges, got nodes: {len(nodes)}, edges: {len(edges)}")
+            else:
+                results.log_fail("Get commit graph", "Missing required fields in graph response")
+        else:
+            results.log_fail("Get commit graph", f"Status code: {response.status_code}")
+    except Exception as e:
+        results.log_fail("Get commit graph", str(e))
+    
+    # Test 6: Generate file diff using LCS algorithm
+    if commit_hashes:
+        try:
+            # Get the algorithm file ID
+            files_response = requests.get(f"{BASE_URL}/repositories/{repo_id}/files", timeout=10)
+            if files_response.status_code == 200:
+                files = files_response.json()
+                algo_file = next((f for f in files if f["name"] == "algorithm_test.py"), None)
+                if algo_file:
+                    # Test diff generation
+                    diff_data = {
+                        "file_id": algo_file["id"],
+                        "commit_hash": commit_hashes[0]
+                    }
+                    response = requests.post(f"{BASE_URL}/repositories/{repo_id}/diff", json=diff_data, timeout=10)
+                    if response.status_code == 200:
+                        diff_result = response.json()
+                        if "diff" in diff_result and "file_name" in diff_result:
+                            diff = diff_result["diff"]
+                            if "additions" in diff and "deletions" in diff and "stats" in diff:
+                                results.log_pass("Generate file diff using LCS (POST /api/repositories/{id}/diff)")
+                                
+                                # Verify LCS algorithm results
+                                stats = diff["stats"]
+                                if "lines_added" in stats and "lines_deleted" in stats:
+                                    results.log_pass("LCS algorithm diff statistics")
+                                else:
+                                    results.log_fail("LCS algorithm stats", "Missing diff statistics")
+                            else:
+                                results.log_fail("LCS diff structure", "Missing required diff fields")
+                        else:
+                            results.log_fail("Generate file diff", "Missing required response fields")
+                    else:
+                        results.log_fail("Generate file diff", f"Status code: {response.status_code}")
+                else:
+                    results.log_fail("Find file for diff", "Could not find algorithm_test.py for diff")
+            else:
+                results.log_fail("Get files for diff", f"Status code: {files_response.status_code}")
+        except Exception as e:
+            results.log_fail("Generate file diff", str(e))
+    
+    # Test 7: Checkout commit
+    if commit_hashes:
+        try:
+            response = requests.post(f"{BASE_URL}/repositories/{repo_id}/checkout/{commit_hashes[0]}", timeout=10)
+            if response.status_code == 200:
+                checkout_result = response.json()
+                if "message" in checkout_result and "commit" in checkout_result:
+                    results.log_pass("Checkout commit (POST /api/repositories/{id}/checkout/{hash})")
+                else:
+                    results.log_fail("Checkout commit", "Missing required fields in checkout response")
+            else:
+                results.log_fail("Checkout commit", f"Status code: {response.status_code}")
+        except Exception as e:
+            results.log_fail("Checkout commit", str(e))
+    
+    # Test 8: Verify commit hash uniqueness and determinism
+    if len(commit_hashes) >= 2:
+        try:
+            if commit_hashes[0] != commit_hashes[1]:
+                results.log_pass("Commit hash uniqueness")
+            else:
+                results.log_fail("Commit hash uniqueness", "Different commits have same hash")
+            
+            # Test deterministic hashing by creating identical commit scenario
+            # This is a simplified test - in practice, timestamps make hashes unique
+            if all(len(h) == 40 and all(c in "0123456789abcdef" for c in h) for h in commit_hashes):
+                results.log_pass("SHA-1 hash format consistency")
+            else:
+                results.log_fail("SHA-1 hash format", "Inconsistent hash formats")
+        except Exception as e:
+            results.log_fail("Commit hash validation", str(e))
+
 def test_repository_deletion(repo_id):
     """Test repository deletion (should cascade delete files)"""
     if not repo_id:
