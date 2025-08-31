@@ -107,39 +107,48 @@ user_problem_statement: "Build a Mini-Git (Version Control System) with DSA algo
 backend:
   - task: "Repository CRUD operations"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented FastAPI endpoints for creating, reading, updating, deleting repositories with MongoDB storage. Includes models for Repository, FileContent, Commit, and Branch."
+      - working: true
+        agent: "testing"
+        comment: "TESTED: All repository CRUD operations working correctly. POST /api/repositories creates repositories with proper UUID generation and MongoDB storage. GET /api/repositories returns all repositories as JSON list. GET /api/repositories/{id} retrieves specific repository with proper 404 handling for non-existent repos. DELETE /api/repositories/{id} properly cascades deletion of all related files, commits, and branches. Repository file_count tracking works correctly."
 
   - task: "File management system"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented file CRUD operations including create, read, update, delete files within repositories. Supports both text and binary files with base64 encoding. Added file upload endpoint."
+      - working: true
+        agent: "testing"
+        comment: "TESTED: All file management operations working correctly. POST /api/repositories/{id}/files creates/updates files with proper content handling and file_count updates. GET /api/repositories/{id}/files lists all repository files. GET /api/repositories/{id}/files/{file_id} retrieves specific files. PUT /api/repositories/{id}/files/{file_id} updates file content correctly. DELETE /api/repositories/{id}/files/{file_id} removes files and decrements file_count. POST /api/repositories/{id}/upload handles multipart file uploads for both text and binary files. File replacement functionality works correctly (fixed minor ID preservation bug). All endpoints have proper 404 error handling for non-existent resources."
 
   - task: "Core utility functions"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented SHA-1 style hashing for content and commits, MongoDB data preparation/parsing utilities for datetime handling, and foundation for DSA algorithms."
+      - working: true
+        agent: "testing"
+        comment: "TESTED: Core utility functions working correctly. SHA-1 hashing functions generate proper content and commit hashes. MongoDB data preparation/parsing utilities handle datetime serialization correctly. UUID generation working for all entities. Health check endpoints (/api/ and /api/health) return proper JSON responses with status information."
 
 frontend:
   - task: "Repository dashboard UI"
