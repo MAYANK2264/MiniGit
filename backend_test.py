@@ -587,7 +587,7 @@ def test_repository_deletion(repo_id):
 
 def main():
     """Run all tests"""
-    print("🚀 Starting Mini-Git Backend API Tests")
+    print("🚀 Starting Mini-Git Backend API Tests with DSA Algorithms")
     print(f"Backend URL: {BASE_URL}")
     print(f"Test started at: {datetime.now()}")
     
@@ -603,6 +603,9 @@ def main():
     # Test repository file count tracking
     test_repository_file_count(repo_id)
     
+    # Test DSA algorithms and commit system (NEW)
+    test_dsa_commit_system(repo_id)
+    
     # Test repository deletion (should be last)
     test_repository_deletion(repo_id)
     
@@ -610,7 +613,7 @@ def main():
     success = results.summary()
     
     if success:
-        print("\n🎉 All tests passed! Backend API is working correctly.")
+        print("\n🎉 All tests passed! Backend API with DSA algorithms is working correctly.")
         return 0
     else:
         print(f"\n💥 {results.failed} test(s) failed. Please check the issues above.")
