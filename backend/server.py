@@ -388,6 +388,7 @@ async def upload_file(repo_id: str, file: UploadFile = File(...)):
     existing_file = await db.files.find_one({"repo_id": repo_id, "name": file.filename})
     
     if existing_file:
+        file_dict["id"] = existing_file["id"]
         await db.files.replace_one({"id": existing_file["id"]}, file_dict)
         file_content.id = existing_file["id"]
     else:
@@ -398,6 +399,13 @@ async def upload_file(repo_id: str, file: UploadFile = File(...)):
             {"$inc": {"file_count": 1}, "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
         )
     
+    return {
+        "message": "File uploaded successfully",
+        "file_id": file_content.id,
+        "filename": file.filename,
+        "size": len(content),
+        "is_binary": is_binary
+    }
 # ====== COMMIT SYSTEM ENDPOINTS ======
 
 @api_router.post("/repositories/{repo_id}/commit", response_model=Commit)
