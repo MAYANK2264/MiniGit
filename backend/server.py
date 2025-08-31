@@ -55,7 +55,7 @@ class Commit(BaseModel):
     author: str = "Anonymous"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     parent_commits: List[str] = []  # For DAG structure
-    files_snapshot: Dict[str, str] = {}  # file_id -> content_hash mapping
+    files_snapshot: Dict[str, Any] = {}  # file_id -> file metadata mapping
     changes_summary: Dict[str, Any] = {}  # additions, deletions, modifications
 
 class Branch(BaseModel):
