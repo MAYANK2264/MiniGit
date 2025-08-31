@@ -521,23 +521,23 @@ async def get_commit_graph(repo_id: str):
     return graph
 
 @api_router.post("/repositories/{repo_id}/diff")
-async def generate_file_diff(repo_id: str, file_id: str, commit_hash: str = None):
+async def generate_file_diff(repo_id: str, request: DiffRequest):
     """Generate diff for a file between current state and specific commit"""
     # Get current file
-    current_file = await db.files.find_one({"id": file_id, "repo_id": repo_id})
+    current_file = await db.files.find_one({"id": request.file_id, "repo_id": repo_id})
     if not current_file:
         raise HTTPException(status_code=404, detail="File not found")
     
     old_content = ""
     
-    if commit_hash:
+    if request.commit_hash:
         # Get file content from specific commit
         commit = await db.commits.find_one({
             "repo_id": repo_id,
-            "commit_hash": commit_hash
+            "commit_hash": request.commit_hash
         })
         
-        if commit and file_id in commit.get("files_snapshot", {}):
+        if commit and request.file_id in commit.get("files_snapshot", {}):
             # Find the file in the commit's snapshot
             # Note: This is simplified - in a real system, you'd store file content separately
             old_content = ""  # Would need to implement file versioning
@@ -549,8 +549,8 @@ async def generate_file_diff(repo_id: str, file_id: str, commit_hash: str = None
     
     return {
         "file_name": current_file["name"],
-        "file_id": file_id,
-        "commit_hash": commit_hash,
+        "file_id": request.file_id,
+        "commit_hash": request.commit_hash,
         "diff": diff_result
     }
 
