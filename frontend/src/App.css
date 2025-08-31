@@ -1,34 +1,239 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* Custom styles for Mini-Git */
+
+.App {
+  min-height: 100vh;
+  background-color: #111827; /* gray-900 */
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+/* Scrollbar styling for dark theme */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+::-webkit-scrollbar-track {
+  background: #374151; /* gray-700 */
+  border-radius: 3px;
 }
 
-.App-link {
-    color: #61dafb;
+::-webkit-scrollbar-thumb {
+  background: #6b7280; /* gray-500 */
+  border-radius: 3px;
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af; /* gray-400 */
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out;
+}
+
+.animate-pulse-custom {
+  animation: pulse 2s infinite;
+}
+
+/* File tree styles */
+.file-tree-item {
+  position: relative;
+}
+
+.file-tree-item::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  width: 12px;
+  height: 1px;
+  background-color: #6b7280;
+}
+
+.file-tree-item::after {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 0;
+  bottom: 50%;
+  width: 1px;
+  background-color: #6b7280;
+}
+
+/* Code editor enhancements */
+.code-editor {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  line-height: 1.5;
+}
+
+.code-editor:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+/* Button hover effects */
+.btn-primary {
+  @apply bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105;
+}
+
+.btn-secondary {
+  @apply bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-all duration-200;
+}
+
+.btn-success {
+  @apply bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105;
+}
+
+.btn-danger {
+  @apply bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-all duration-200;
+}
+
+/* Card hover effects */
+.card-hover {
+  @apply transition-all duration-200 transform hover:scale-105 hover:shadow-lg;
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+}
+
+/* Loading spinner */
+.spinner {
+  border: 2px solid #374151;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Status indicators */
+.status-dot {
+  @apply w-2 h-2 rounded-full;
+}
+
+.status-online {
+  @apply bg-green-500;
+}
+
+.status-offline {
+  @apply bg-red-500;
+}
+
+.status-pending {
+  @apply bg-yellow-500;
+}
+
+/* Syntax highlighting preparations */
+.syntax-highlight {
+  background-color: #1f2937;
+  color: #e5e7eb;
+}
+
+.syntax-keyword {
+  color: #f59e0b;
+}
+
+.syntax-string {
+  color: #10b981;
+}
+
+.syntax-comment {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.syntax-function {
+  color: #3b82f6;
+}
+
+.syntax-variable {
+  color: #8b5cf6;
+}
+
+/* Responsive design helpers */
+@media (max-width: 768px) {
+  .mobile-hidden {
+    display: none;
+  }
+  
+  .mobile-full {
+    width: 100%;
+  }
+}
+
+/* Focus states for accessibility */
+button:focus,
+input:focus,
+textarea:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Selection styling */
+::selection {
+  background-color: #3b82f6;
+  color: white;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom gradient backgrounds */
+.gradient-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+}
+
+.gradient-secondary {
+  background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+}
+
+.gradient-dark {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
 }
