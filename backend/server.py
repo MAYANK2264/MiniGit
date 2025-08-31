@@ -82,6 +82,10 @@ class CreateCommitRequest(BaseModel):
     message: str
     author: str = "Anonymous"
 
+class DiffRequest(BaseModel):
+    file_id: str
+    commit_hash: Optional[str] = None
+
 # ====== UTILITY FUNCTIONS & DSA ALGORITHMS ======
 
 def generate_content_hash(content: str) -> str:
