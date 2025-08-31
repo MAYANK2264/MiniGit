@@ -393,7 +393,169 @@ async def upload_file(repo_id: str, file: UploadFile = File(...)):
             {"$inc": {"file_count": 1}, "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
         )
     
-    return {"message": "File uploaded successfully", "file_id": file_content.id}
+# ====== COMMIT SYSTEM ENDPOINTS ======
+
+@api_router.post("/repositories/{repo_id}/commit", response_model=Commit)
+async def create_commit(repo_id: str, request: CreateCommitRequest):
+    """Create a new commit with current repository state"""
+    # Check if repository exists
+    repo = await db.repositories.find_one({"id": repo_id})
+    if not repo:
+        raise HTTPException(status_code=404, detail="Repository not found")
+    
+    # Get all current files in repository
+    files = await db.files.find({"repo_id": repo_id}).to_list(1000)
+    
+    if not files:
+        raise HTTPException(status_code=400, detail="Cannot commit empty repository")
+    
+    # Create files snapshot with content hashes
+    files_snapshot = {}
+    changes_summary = {"additions": 0, "deletions": 0, "modifications": 0}
+    
+    # Get the last commit to compare changes
+    last_commit = await db.commits.find_one(
+        {"repo_id": repo_id}, 
+        sort=[("created_at", -1)]
+    )
+    
+    for file in files:
+        content_hash = generate_content_hash(file["content"])
+        files_snapshot[file["id"]] = {
+            "name": file["name"],
+            "hash": content_hash,
+            "size": file["size"]
+        }
+        
+        # Calculate changes compared to last commit
+        if last_commit and file["id"] in last_commit.get("files_snapshot", {}):
+            if last_commit["files_snapshot"][file["id"]]["hash"] != content_hash:
+                changes_summary["modifications"] += 1
+        else:
+            changes_summary["additions"] += 1
+    
+    # Check for deletions (files in last commit but not in current)
+    if last_commit:
+        for old_file_id in last_commit.get("files_snapshot", {}):
+            if old_file_id not in files_snapshot:
+                changes_summary["deletions"] += 1
+    
+    # Generate commit hash
+    timestamp = datetime.now(timezone.utc).isoformat()
+    commit_hash = generate_commit_hash(repo_id, request.message, timestamp, files_snapshot)
+    
+    # Create commit object
+    commit = Commit(
+        repo_id=repo_id,
+        commit_hash=commit_hash,
+        message=request.message,
+        author=request.author,
+        parent_commits=[last_commit["commit_hash"]] if last_commit else [],
+        files_snapshot=files_snapshot,
+        changes_summary=changes_summary
+    )
+    
+    # Save commit to database
+    commit_dict = prepare_for_mongo(commit.dict())
+    await db.commits.insert_one(commit_dict)
+    
+    # Update repository's updated_at timestamp
+    await db.repositories.update_one(
+        {"id": repo_id},
+        {"$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return commit
+
+@api_router.get("/repositories/{repo_id}/commits", response_model=List[Commit])
+async def get_commits(repo_id: str, limit: int = 50):
+    """Get commit history for repository"""
+    commits = await db.commits.find(
+        {"repo_id": repo_id}
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    return [Commit(**parse_from_mongo(commit)) for commit in commits]
+
+@api_router.get("/repositories/{repo_id}/commits/{commit_hash}", response_model=Commit)
+async def get_commit(repo_id: str, commit_hash: str):
+    """Get specific commit details"""
+    commit = await db.commits.find_one({
+        "repo_id": repo_id, 
+        "commit_hash": commit_hash
+    })
+    
+    if not commit:
+        raise HTTPException(status_code=404, detail="Commit not found")
+    
+    return Commit(**parse_from_mongo(commit))
+
+@api_router.get("/repositories/{repo_id}/commit-graph")
+async def get_commit_graph(repo_id: str):
+    """Get commit history as DAG structure"""
+    commits = await db.commits.find({"repo_id": repo_id}).to_list(1000)
+    
+    if not commits:
+        return {"nodes": [], "edges": [], "total_commits": 0}
+    
+    # Parse commits and build graph
+    parsed_commits = [parse_from_mongo(commit) for commit in commits]
+    graph = build_commit_graph(parsed_commits)
+    
+    return graph
+
+@api_router.post("/repositories/{repo_id}/diff")
+async def generate_file_diff(repo_id: str, file_id: str, commit_hash: str = None):
+    """Generate diff for a file between current state and specific commit"""
+    # Get current file
+    current_file = await db.files.find_one({"id": file_id, "repo_id": repo_id})
+    if not current_file:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    old_content = ""
+    
+    if commit_hash:
+        # Get file content from specific commit
+        commit = await db.commits.find_one({
+            "repo_id": repo_id,
+            "commit_hash": commit_hash
+        })
+        
+        if commit and file_id in commit.get("files_snapshot", {}):
+            # Find the file in the commit's snapshot
+            # Note: This is simplified - in a real system, you'd store file content separately
+            old_content = ""  # Would need to implement file versioning
+        else:
+            old_content = ""
+    
+    # Generate diff using LCS algorithm
+    diff_result = generate_diff(old_content, current_file["content"])
+    
+    return {
+        "file_name": current_file["name"],
+        "file_id": file_id,
+        "commit_hash": commit_hash,
+        "diff": diff_result
+    }
+
+@api_router.post("/repositories/{repo_id}/checkout/{commit_hash}")
+async def checkout_commit(repo_id: str, commit_hash: str):
+    """Checkout repository to specific commit state (simplified)"""
+    # Get commit
+    commit = await db.commits.find_one({
+        "repo_id": repo_id,
+        "commit_hash": commit_hash
+    })
+    
+    if not commit:
+        raise HTTPException(status_code=404, detail="Commit not found")
+    
+    # In a real implementation, this would restore file contents
+    # For now, just return the commit information
+    return {
+        "message": f"Repository checked out to commit {commit_hash[:8]}",
+        "commit": Commit(**parse_from_mongo(commit)),
+        "files_in_commit": len(commit.get("files_snapshot", {}))
+    }
 
 # ====== STATUS ENDPOINT ======
 
