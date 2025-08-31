@@ -364,8 +364,13 @@ async def upload_file(repo_id: str, file: UploadFile = File(...)):
         content_str = base64.b64encode(content).decode('utf-8')
         is_binary = True
     else:
-        content_str = content.decode('utf-8')
-        is_binary = False
+        try:
+            content_str = content.decode('utf-8')
+            is_binary = False
+        except UnicodeDecodeError:
+            # If can't decode as text, treat as binary
+            content_str = base64.b64encode(content).decode('utf-8')
+            is_binary = True
     
     # Create file record
     file_content = FileContent(
