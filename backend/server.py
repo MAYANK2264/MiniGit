@@ -82,7 +82,7 @@ class CreateCommitRequest(BaseModel):
     message: str
     author: str = "Anonymous"
 
-# ====== UTILITY FUNCTIONS ======
+# ====== UTILITY FUNCTIONS & DSA ALGORITHMS ======
 
 def generate_content_hash(content: str) -> str:
     """Generate SHA-1 style hash for content"""
@@ -92,6 +92,101 @@ def generate_commit_hash(repo_id: str, message: str, timestamp: str, files: Dict
     """Generate commit hash based on repository, message, timestamp, and files"""
     data = f"{repo_id}{message}{timestamp}{json.dumps(files, sort_keys=True)}"
     return hashlib.sha1(data.encode()).hexdigest()
+
+def longest_common_subsequence(text1: str, text2: str) -> List[List[int]]:
+    """
+    LCS Dynamic Programming Algorithm for diff generation
+    Returns the LCS table for computing diffs
+    """
+    m, n = len(text1), len(text2)
+    lcs_table = [[0] * (n + 1) for _ in range(m + 1)]
+    
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if text1[i-1] == text2[j-1]:
+                lcs_table[i][j] = lcs_table[i-1][j-1] + 1
+            else:
+                lcs_table[i][j] = max(lcs_table[i-1][j], lcs_table[i][j-1])
+    
+    return lcs_table
+
+def generate_diff(old_content: str, new_content: str) -> Dict[str, Any]:
+    """
+    Generate detailed diff using LCS algorithm
+    Returns additions, deletions, and unchanged lines
+    """
+    old_lines = old_content.split('\n') if old_content else []
+    new_lines = new_content.split('\n') if new_content else []
+    
+    # Get LCS table
+    lcs_table = longest_common_subsequence('\n'.join(old_lines), '\n'.join(new_lines))
+    
+    # Backtrack to find actual diff
+    i, j = len(old_lines), len(new_lines)
+    additions = []
+    deletions = []
+    unchanged = []
+    
+    # Simple line-by-line diff for better visualization
+    old_set = set(enumerate(old_lines))
+    new_set = set(enumerate(new_lines))
+    
+    # Find additions (lines in new but not in old)
+    for line_num, line in enumerate(new_lines):
+        if line not in old_lines:
+            additions.append({"line_num": line_num + 1, "content": line})
+    
+    # Find deletions (lines in old but not in new)  
+    for line_num, line in enumerate(old_lines):
+        if line not in new_lines:
+            deletions.append({"line_num": line_num + 1, "content": line})
+    
+    # Find unchanged lines
+    for line_num, line in enumerate(new_lines):
+        if line in old_lines:
+            unchanged.append({"line_num": line_num + 1, "content": line})
+    
+    return {
+        "additions": additions,
+        "deletions": deletions,
+        "unchanged": unchanged,
+        "stats": {
+            "lines_added": len(additions),
+            "lines_deleted": len(deletions),
+            "lines_unchanged": len(unchanged)
+        }
+    }
+
+def build_commit_graph(commits: List[Dict]) -> Dict[str, Any]:
+    """
+    Build DAG (Directed Acyclic Graph) for commit history
+    Returns graph structure with nodes and edges
+    """
+    nodes = []
+    edges = []
+    
+    # Create nodes for each commit
+    for commit in commits:
+        nodes.append({
+            "id": commit["commit_hash"],
+            "message": commit["message"],
+            "author": commit["author"],
+            "timestamp": commit["created_at"],
+            "files_count": len(commit.get("files_snapshot", {}))
+        })
+        
+        # Create edges from parent commits
+        for parent_hash in commit.get("parent_commits", []):
+            edges.append({
+                "from": parent_hash,
+                "to": commit["commit_hash"]
+            })
+    
+    return {
+        "nodes": nodes,
+        "edges": edges,
+        "total_commits": len(nodes)
+    }
 
 def prepare_for_mongo(data):
     """Prepare data for MongoDB storage"""
